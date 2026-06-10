@@ -1,0 +1,215 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ROLES ====================
+model Role {
+  RoleID      Int     @id @default(autoincrement()) @map("RoleID")
+  RoleName    String  @unique @map("RoleName") @db.VarChar(50)
+  Description String? @map("Description") @db.Text
+
+  users User[]
+
+  @@map("tblRoles")
+}
+
+// ==================== USERS ====================
+model User {
+  UserID       Int      @id @default(autoincrement()) @map("UserID")
+  FullName     String   @map("FullName") @db.VarChar(225)
+  Email        String   @unique @map("Email") @db.VarChar(225)
+  Phone        String?  @map("Phone") @db.VarChar(17)
+  Password     String   @map("Password") @db.VarChar(100)
+  RoleID       Int      @map("RoleID")
+  PassportOrId String?  @map("PassportOrId") @db.VarChar(225)
+  Status       Int      @default(1) @map("Status")
+  CreatedAt    DateTime @default(now()) @map("CreatedAt")
+
+  role          Role              @relation(fields: [RoleID], references: [RoleID])
+  bookings      Booking[]
+  notifications Notification[]
+  reviews       Review[]
+
+  @@map("tblUsers")
+}
+
+// ==================== HOTELS ====================
+model Hotel {
+  HotelID       Int      @id @default(autoincrement()) @map("HotelID")
+  HotelName     String   @map("HotelName") @db.VarChar(100)
+  Address       String   @map("Address") @db.Text
+  Location      String   @map("Location") @db.VarChar(100)
+  Phone         String   @map("Phone") @db.VarChar(15)
+  Email         String?  @map("Email") @db.VarChar(225)
+  Description   String?  @map("Description") @db.Text
+  MainImage     String?  @map("MainImage") @db.VarChar(500)
+  GalleryImages String?  @map("GalleryImages") @db.Text
+  LogoImage     String?  @map("LogoImage") @db.VarChar(500)
+  CreatedAt     DateTime @default(now()) @map("CreatedAt")
+
+  rooms   Room[]
+  reviews Review[]
+
+  @@map("tblHotels")
+}
+
+// ==================== ROOM TYPES ====================
+model RoomType {
+  RoomTypeID    Int     @id @default(autoincrement()) @map("RoomTypeID")
+  TypeName      String  @map("TypeName") @db.VarChar(50)
+  PricePerNight Float   @map("PricePerNight")
+  Description   String? @map("Description") @db.Text
+  MaxOccupancy  String? @map("MaxOccupancy") @db.VarChar(30)
+
+  rooms Room[]
+
+  @@map("tblRoomTypes")
+}
+
+// ==================== ROOMS ====================
+model Room {
+  RoomID       Int      @id @default(autoincrement()) @map("RoomID")
+  HotelID      Int      @map("HotelID")
+  RoomTypeID   Int      @map("RoomTypeID")
+  RoomNumber   String   @map("RoomNumber") @db.VarChar(10)
+  Price        Float    @map("Price")
+  Status       Int      @default(1) @map("Status")
+  FloorNumber  Int?     @map("FloorNumber")
+  CreatedAt    DateTime @default(now()) @map("CreatedAt")
+
+  hotel    Hotel    @relation(fields: [HotelID], references: [HotelID])
+  roomType RoomType @relation(fields: [RoomTypeID], references: [RoomTypeID])
+  bookingDetails BookingDetail[]
+
+  @@unique([HotelID, RoomNumber])
+  @@map("tblRooms")
+}
+
+// ==================== BOOKINGS ====================
+model Booking {
+  BookingID     Int      @id @default(autoincrement()) @map("BookingID")
+  UserID        Int      @map("UserID")
+  BookingDate   DateTime @default(now()) @map("BookingDate")
+  CheckInDate   DateTime @map("CheckInDate")
+  CheckOutDate  DateTime @map("CheckOutDate")
+  Status        Int      @default(1) @map("Status")
+  TotalAmount   Float    @default(0) @map("TotalAmount")
+  CreatedAt     DateTime @default(now()) @map("CreatedAt")
+
+  user            User              @relation(fields: [UserID], references: [UserID])
+  bookingDetails  BookingDetail[]
+  payments        Payment[]
+  notifications   Notification[]
+  bookingServices BookingService[]
+
+  @@index([UserID])
+  @@index([Status])
+  @@index([CheckInDate])
+  @@map("tblBookings")
+}
+
+// ==================== BOOKING DETAILS ====================
+model BookingDetail {
+  BookingDetailID Int      @id @default(autoincrement()) @map("BookingDetailID")
+  BookingID       Int      @map("BookingID")
+  RoomID          Int      @map("RoomID")
+  CheckInDate     DateTime @map("CheckInDate")
+  CheckOutDate    DateTime @map("CheckOutDate")
+  PricePerRoom    Float    @map("PricePerRoom")
+  SubTotal        Float    @map("SubTotal")
+
+  booking Booking @relation(fields: [BookingID], references: [BookingID])
+  room    Room    @relation(fields: [RoomID], references: [RoomID])
+
+  @@unique([BookingID, RoomID])
+  @@map("tblBookingDetails")
+}
+
+// ==================== PAYMENTS ====================
+model Payment {
+  PaymentID          Int      @id @default(autoincrement()) @map("PaymentID")
+  BookingID          Int      @map("BookingID")
+  Amount             Float    @map("Amount")
+  PaymentMethod      String   @map("PaymentMethod") @db.VarChar(50)
+  PaymentStatus      Int      @default(1) @map("PaymentStatus")
+  PaymentDate        DateTime @default(now()) @map("PaymentDate")
+  TransactionReference String? @map("TransactionReference") @db.VarChar(255)
+
+  booking Booking @relation(fields: [BookingID], references: [BookingID])
+
+  @@index([BookingID])
+  @@index([PaymentStatus])
+  @@map("tblPayments")
+}
+
+// ==================== SERVICES ====================
+model Service {
+  ServiceID   Int     @id @default(autoincrement()) @map("ServiceID")
+  ServiceName String  @map("ServiceName") @db.VarChar(100)
+  Price       Float   @map("Price")
+  Description String? @map("Description") @db.Text
+  Status      Int     @default(1) @map("Status")
+
+  bookingServices BookingService[]
+
+  @@map("tblServices")
+}
+
+// ==================== BOOKING SERVICES ====================
+model BookingService {
+  BookingServiceID Int     @id @default(autoincrement()) @map("BookingServiceID")
+  BookingID        Int     @map("BookingID")
+  ServiceID        Int     @map("ServiceID")
+  Quantity         Int     @default(1) @map("Quantity")
+  Price            Float   @map("Price")
+  SubTotal         Float   @map("SubTotal")
+
+  booking Booking @relation(fields: [BookingID], references: [BookingID])
+  service Service @relation(fields: [ServiceID], references: [ServiceID])
+
+  @@unique([BookingID, ServiceID])
+  @@map("tblBookingServices")
+}
+
+// ==================== NOTIFICATIONS ====================
+model Notification {
+  NotificationID Int      @id @default(autoincrement()) @map("NotificationID")
+  UserID         Int      @map("UserID")
+  BookingID      Int?     @map("BookingID")
+  Title          String   @map("Title") @db.VarChar(255)
+  Message        String   @map("Message") @db.Text
+  Type           String   @default("app") @map("Type") @db.VarChar(50)
+  IsRead         Boolean  @default(false) @map("IsRead")
+  CreatedAt      DateTime @default(now()) @map("CreatedAt")
+
+  user    User    @relation(fields: [UserID], references: [UserID])
+  booking Booking? @relation(fields: [BookingID], references: [BookingID])
+
+  @@index([UserID])
+  @@index([IsRead])
+  @@index([CreatedAt])
+  @@map("tblNotifications")
+}
+
+// ==================== REVIEWS ====================
+model Review {
+  ReviewID  Int      @id @default(autoincrement()) @map("ReviewID")
+  UserID    Int      @map("UserID")
+  HotelID   Int      @map("HotelID")
+  Rating    Int      @map("Rating")
+  Comment   String?  @map("Comment") @db.Text
+  CreatedAt DateTime @default(now()) @map("CreatedAt")
+
+  user  User  @relation(fields: [UserID], references: [UserID])
+  hotel Hotel @relation(fields: [HotelID], references: [HotelID])
+
+  @@unique([UserID, HotelID])
+  @@index([HotelID])
+  @@index([Rating])
+  @@map("tblReviews")
+}
