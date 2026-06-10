@@ -5,6 +5,16 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import path from 'path';
 import roleRoutes from './routes/role.routes';
+import userRoutes from './routes/user.routes';
+import authRoutes from './routes/auth.routes';
+import hotelRoutes from './routes/hotel.routes';
+import reviewRoutes from './routes/review.routes';
+import searchRoutes from './routes/search.routes';
+import dashboardRoutes from './routes/dashboard.routes';
+import roomRoutes from './routes/room.routes';
+import serviceRoutes from './routes/service.routes';
+import paymentRoutes from './routes/payment.routes';
+import bookingRoutes from './routes/booking.routes';
 
 dotenv.config();
 
@@ -39,8 +49,11 @@ app.get('/', (req: Request, res: Response) => {
     endpoints: {
       health: 'GET /health',
       test: 'GET /api/test',
+      auth: 'POST /api/auth/register, POST /api/auth/login',
       hotels: 'GET /api/hotels',
-      rooms: 'GET /api/rooms'
+      rooms: 'GET /api/rooms',
+      bookings: 'GET /api/bookings',
+      services: 'GET /api/services'
     }
   });
 });
@@ -53,31 +66,23 @@ app.get('/api/test', (req: Request, res: Response) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// ==================== API ROUTES ====================
+// Order matters! Specific routes first, then dynamic routes
 app.use('/api/roles', roleRoutes);
-app.get('/api/hotels', (req: Request, res: Response) => {
-  res.status(200).json({
-    success: true,
-    message: 'Hotels endpoint - Coming soon',
-    hotels: [
-      { id: 1, name: 'Sample Hotel 1', location: 'Phnom Penh' },
-      { id: 2, name: 'Sample Hotel 2', location: 'Siem Reap' }
-    ]
-  });
-});
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/hotels', hotelRoutes);
+app.use('/api/rooms', roomRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/services', serviceRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
-app.get('/api/rooms', (req: Request, res: Response) => {
-  res.status(200).json({
-    success: true,
-    message: 'Rooms endpoint - Coming soon',
-    rooms: [
-      { id: 1, roomNumber: '101', type: 'Standard', price: 50 },
-      { id: 2, roomNumber: '102', type: 'Deluxe', price: 80 }
-    ]
-  });
-});
-
-// ==================== 404 HANDLER (FIXED) ====================
-// ប្រើ app.use ជំនួស app.all ដើម្បីជៀសវាងបញ្ហា path-to-regexp
+// ==================== 404 HANDLER ====================
+// ត្រូវតែនៅចុងបំផុត ក្រោយ routes ទាំងអស់
 app.use((req: Request, res: Response) => {
   res.status(404).json({
     success: false,
@@ -86,8 +91,12 @@ app.use((req: Request, res: Response) => {
       'GET /',
       'GET /health',
       'GET /api/test',
+      'POST /api/auth/register',
+      'POST /api/auth/login',
       'GET /api/hotels',
-      'GET /api/rooms'
+      'GET /api/rooms',
+      'GET /api/bookings',
+      'GET /api/services'
     ]
   });
 });
@@ -110,6 +119,8 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on: http://localhost:${PORT}`);
   console.log(`📝 Health check: http://localhost:${PORT}/health`);
   console.log(`🧪 Test API: http://localhost:${PORT}/api/test`);
+  console.log(`🔐 Register: POST http://localhost:${PORT}/api/auth/register`);
+  console.log(`🔐 Login: POST http://localhost:${PORT}/api/auth/login`);
   console.log(`🏨 Hotels: http://localhost:${PORT}/api/hotels`);
   console.log('='.repeat(50));
 });

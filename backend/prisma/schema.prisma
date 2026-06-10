@@ -23,7 +23,7 @@ model User {
   UserID       Int      @id @default(autoincrement()) @map("UserID")
   FullName     String   @map("FullName") @db.VarChar(225)
   Email        String   @unique @map("Email") @db.VarChar(225)
-  Phone        String?  @map("Phone") @db.VarChar(17)
+  Phone        String?  @unique @map("Phone") @db.VarChar(17)
   Password     String   @map("Password") @db.VarChar(100)
   RoleID       Int      @map("RoleID")
   PassportOrId String?  @map("PassportOrId") @db.VarChar(225)
